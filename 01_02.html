@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>其实应该是这样来的</title>
+    <style>
+        html,
+        body {
+            margin: 0;
+            border: none;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="myCanvas" width="900" height="900" style="background: #f3f3f3;">
+        您的浏览器不支持canvas标签。
+    </canvas>
+
+    <script>
+        /*
+         * 绘制点,并且在画板上显示点的名字和坐标
+         *
+         * point
+         *  x,y,name
+         *
+         *  如果name为空 则不会显示坐标和名字
+         * */
+
+        function fillPoint(ctx, point) {
+            if (!ctx || !point) {
+                return false;
+            }
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, 2, 0, 2 * Math.PI, true);
+            ctx.fill();
+            ctx.font = "36px";
+            if (point.name) {
+                ctx.fillText(point.name + '(' + point.x + ',' + point.y + ')', point.x + 10, point.y);
+            }
+            ctx.closePath();
+        }
+
+        /*
+         *  传入数组,进行连线
+         * */
+
+        function linePoint(ctx, PointList) {
+            if (!ctx || !PointList.length) {
+                return false;
+            }
+            ctx.beginPath();
+            for (var i = 0; i < PointList.length; i++) {
+                var point = PointList[i];
+
+                if (i == 0) {
+                    ctx.moveTo(point.x, point.y);
+                } else {
+                    ctx.lineTo(point.x, point.y);
+                }
+            }
+            ctx.stroke();
+            ctx.closePath();
+        }
+    </script>
+    <script>
+        var myCanvas = document.getElementById('myCanvas');
+        var ctx = myCanvas.getContext('2d');
+
+        function pie() {
+            this.r = 50; //半径
+            this.r_point = {
+                x: 100,
+                y: 75,
+                name: '圆心'
+            }
+        }
+
+        // http://www.w3school.com.cn/tags/canvas_arc.asp
+        // 先画个框架
+        pie.prototype.drawSB = function (startAngle, endAngle) {
+            const self = this;
+            ctx.beginPath();
+            // 绘制关键点
+            fillPoint(ctx, self.r_point);
+
+            const start_point = {
+                x: self.r_point.x + self.r * Math.cos(startAngle),
+                y: self.r_point.y + self.r * Math.sin(startAngle),
+                name: '起点'
+            }
+            fillPoint(ctx, start_point);
+
+            const end_point = {
+                x: self.r_point.x + self.r * Math.cos(endAngle),
+                y: self.r_point.y + self.r * Math.sin(endAngle),
+                name: '终点'
+            }
+            fillPoint(ctx, end_point);
+
+            linePoint(ctx, [self.r_point, start_point, end_point]);
+
+            ctx.arc(100, 75, this.r, startAngle || 0, endAngle || 2 * Math.PI);
+            ctx.fillStyle = "red";
+            ctx.stroke();
+
+
+            ctx.fill();
+
+
+
+
+            ctx.closePath();
+        }
+        new pie().drawSB(Math.PI / 3, 2 * Math.PI / 3);
+    </script>
+
+
+</body>
+
+</html>

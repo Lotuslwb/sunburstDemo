@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>终于看到他了 -- 旭日图 sunburst</title>
+    <style>
+        html,
+        body {
+            margin: 0;
+            border: none;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="myCanvas" width="900" height="900" style="background: #f3f3f3;">
+        您的浏览器不支持canvas标签。
+    </canvas>
+    <script>
+        /*
+         * 绘制点,并且在画板上显示点的名字和坐标
+         *
+         * point
+         *  x,y,name
+         *
+         *  如果name为空 则不会显示坐标和名字
+         * */
+
+        function fillPoint(ctx, point) {
+            if (!ctx || !point) {
+                return false;
+            }
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, 2, 0, 2 * Math.PI, true);
+            ctx.fill();
+            ctx.font = "36px";
+            if (point.name) {
+                ctx.fillText(point.name + '(' + point.x + ',' + point.y + ')', point.x + 10, point.y);
+            }
+            ctx.closePath();
+        }
+
+        /*
+         *  传入数组,进行连线
+         * */
+
+        function linePoint(ctx, PointList) {
+            if (!ctx || !PointList.length) {
+                return false;
+            }
+            for (var i = 0; i < PointList.length; i++) {
+                var point = PointList[i];
+
+                if (i == 0) {
+                    ctx.moveTo(point.x, point.y);
+                } else {
+                    ctx.lineTo(point.x, point.y);
+                }
+            }
+        }
+    </script>
+    <script>
+        var myCanvas = document.getElementById('myCanvas');
+        var ctx = myCanvas.getContext('2d');
+
+        /*  Pie 饼图Class
+         *  options.r  半径
+         *  options.r_point  圆点  { x:20,y:20,name:'圆心'}
+         *  options.colorMap  颜色数组   ['green', 'red', 'blue']
+         *  options.data  数据   [20,30,60]
+         */
+        function Pie(options) {
+            this.r = options.r;
+            this.r_point = options.r_point;
+            this.colorMap = options.colorMap;
+            this.data = options.data;
+            this.fillData();
+        }
+
+        // http://www.w3school.com.cn/tags/canvas_arc.asp
+        // 绘制扇形
+        Pie.prototype.drawSB = function (
+            startAngle,
+            endAngle,
+            color, debug) {
+            const self = this;
+            // 绘制关键点
+            ctx.beginPath();
+            const start_point = {
+                x: self.r_point.x + self.r * Math.cos(startAngle),
+                y: self.r_point.y + self.r * Math.sin(startAngle),
+                name: '起点'
+            }
+            const end_point = {
+                x: self.r_point.x + self.r * Math.cos(endAngle),
+                y: self.r_point.y + self.r * Math.sin(endAngle),
+                name: '终点'
+            }
+
+            linePoint(ctx, [self.r_point, start_point, end_point]);
+
+
+            ctx.arc(self.r_point.x, self.r_point.y, this.r, startAngle || 0, endAngle || 2 * Math.PI);
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.closePath();
+
+            if (debug) {
+                fillPoint(ctx, start_point);
+                fillPoint(ctx, end_point);
+                console.log('start_point', start_point)
+                console.log('end_point', end_point)
+            }
+
+        }
+
+        // 填入data
+        Pie.prototype.fillData = function () {
+            const self = this;
+            const data = this.data;
+            const sum = data.length > 0 && data.reduce((prev, cur) => {
+                return prev + cur;
+            });
+
+            let startAngle = 0;
+            data.map((item, index) => {
+                const percent = item / sum;
+                const endAngle = startAngle + 2 * percent * Math.PI;
+                self.drawSB(startAngle, endAngle, self.colorMap[index]);
+                startAngle = endAngle;
+            })
+        }
+    </script>
+
+    <script>
+        var item1 = {
+            color: 'hsl(74,56%,100%)'
+        };
+        var item2 = {
+            color: '#FF8C75'
+        };
+        var item3 = {
+            color: '#FFB499'
+        };
+
+        var data = [{
+            children: [{
+                value: 5,
+                children: [{
+                    value: 1,
+                    itemStyle: item1
+                }, {
+                    value: 2,
+                    children: [{
+                        value: 1,
+                        itemStyle: item2
+                    }]
+                }, {
+                    children: [{
+                        value: 1
+                    }]
+                }],
+                itemStyle: item1
+            }, {
+                value: 10,
+                children: [{
+                    value: 6,
+                    children: [{
+                        value: 1,
+                        itemStyle: item1
+                    }, {
+                        value: 1
+                    }, {
+                        value: 1,
+                        itemStyle: item2
+                    }, {
+                        value: 1
+                    }],
+                    itemStyle: item3
+                }, {
+                    value: 2,
+                    children: [{
+                        value: 1
+                    }],
+                    itemStyle: item3
+                }, {
+                    children: [{
+                        value: 1,
+                        itemStyle: item2
+                    }]
+                }],
+                itemStyle: item1
+            }],
+            value: 15,
+            itemStyle: item1
+        }, {
+            value: 9,
+            children: [{
+                value: 4,
+                children: [{
+                    value: 2,
+                    itemStyle: item2
+                }, {
+                    children: [{
+                        value: 1,
+                        itemStyle: item1
+                    }]
+                }],
+                itemStyle: item1
+            }, {
+                children: [{
+                    value: 3,
+                    children: [{
+                        value: 1
+                    }, {
+                        value: 1,
+                        itemStyle: item2
+                    }]
+                }],
+                itemStyle: item3
+            }],
+            itemStyle: item2
+        }, {
+            value: 7,
+            children: [{
+                children: [{
+                    value: 1,
+                    itemStyle: item3
+                }, {
+                    value: 3,
+                    children: [{
+                        value: 1,
+                        itemStyle: item2
+                    }, {
+                        value: 1
+                    }],
+                    itemStyle: item2
+                }, {
+                    value: 2,
+                    children: [{
+                        value: 1
+                    }, {
+                        value: 1,
+                        itemStyle: item1
+                    }],
+                    itemStyle: item1
+                }],
+                itemStyle: item3
+            }],
+            itemStyle: item2
+        }, {
+            children: [{
+                value: 6,
+                children: [{
+                    value: 1,
+                    itemStyle: item2
+                }, {
+                    value: 2,
+                    children: [{
+                        value: 2,
+                        itemStyle: item2
+                    }],
+                    itemStyle: item1
+                }, {
+                    value: 1,
+                    itemStyle: item3
+                }],
+                itemStyle: item3
+            }, {
+                value: 3,
+                children: [{
+                    value: 1,
+                }, {
+                    children: [{
+                        value: 1,
+                        itemStyle: item2
+                    }]
+                }, {
+                    value: 1
+                }],
+                itemStyle: item3
+            }],
+            itemStyle: item3,
+            value: 3
+        }];
+
+
+        //  旭日图 对象
+        function sunburst() {
+            this.data = data
+            this.hanldeData();
+        }
+
+        sunburst.prototype.buildPie = function (options) {
+            return new Pie({
+                r: options.r,
+                r_point: {
+                    x: 200,
+                    y: 200,
+                    name: '圆心'
+                },
+                colorMap: options.colorMap,
+                data: options.data
+            })
+        }
+        sunburst.prototype.hanldeData = function () {
+            const self = this;
+            let data = self.data;
+            let leave = 0;
+            let obj = [{
+                pieData: [1],
+                colorMap: ['#f3f3f3'],
+                leave: 0
+            }]
+
+            flattenData(data, leave + 1);
+
+            // 将树状数据结构 压平成 分级数据，每一级的数据合并在一起
+            function flattenData(data, leave) {
+                const pieData = [];
+                const colorMap = [];
+
+                data.map(item => {
+                    pieData.push(item.value || 0);
+                    colorMap.push(item.itemStyle ? item.itemStyle.color : '#f3f3f3');
+                    if (item.children) {
+                        flattenData(item.children, leave + 1);
+                    }
+                })
+                // 将当前数据填入对应的leave
+                let cureentIndex;
+                let currentLeaveData = obj.filter((item, index) => {
+                    if (item.leave == leave) {
+                        cureentIndex = index;
+                        return true;
+                    }
+                });
+                if (currentLeaveData.length > 0) {
+                    obj[cureentIndex] = {
+                        pieData: currentLeaveData[0].pieData.concat(pieData),
+                        colorMap: currentLeaveData[0].colorMap.concat(colorMap),
+                        leave
+                    };
+                } else {
+                    obj.push({
+                        leave,
+                        colorMap,
+                        pieData
+                    });
+                }
+            }
+
+            console.log(obj);
+
+            for (let currentLeave = obj.length - 1; currentLeave >= 0; currentLeave--) {
+                obj.map(item => {
+                    if (item.leave == currentLeave) {
+                        self.buildPie({
+                            r: (item.leave + 1) * 30,
+                            data: item.pieData,
+                            colorMap: item.colorMap,
+                        })
+                    }
+                })
+            }
+        }
+        new sunburst();
+    </script>
+</body>
+
+</html>
